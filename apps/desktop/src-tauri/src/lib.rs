@@ -203,9 +203,8 @@ fn cmd_save_export_to_downloads(
     Ok(dest.to_string_lossy().into_owned())
 }
 
-#[tauri::command]
-fn cmd_copy_artifact_to_clipboard(file_name: String, bytes: Vec<u8>) -> Result<String, String> {
-    let raw_name = PathBuf::from(&file_name)
+fn sanitize_file_name(file_name: &str) -> Result<String, String> {
+    let raw_name = PathBuf::from(file_name)
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or_else(|| "Invalid file name".to_string())?
@@ -220,9 +219,15 @@ fn cmd_copy_artifact_to_clipboard(file_name: String, bytes: Vec<u8>) -> Result<S
             }
         })
         .collect();
-    if safe_name.is_empty() {
+    if safe_name.is_empty() || safe_name.chars().all(|c| c == '.') {
         return Err("Empty sanitized file name".to_string());
     }
+    Ok(safe_name)
+}
+
+#[tauri::command]
+fn cmd_copy_artifact_to_clipboard(file_name: String, bytes: Vec<u8>) -> Result<String, String> {
+    let safe_name = sanitize_file_name(&file_name)?;
 
     let clipboard_dir = std::env::temp_dir().join("StikSoundClipboard");
     let dest = clipboard_dir.join(&safe_name);
@@ -278,19 +283,120 @@ fn ensure_isolated_webview2_data_dir() {
     }
 }
 
+#[cfg(target_os = "android")]
+mod android_bridge {
+    use tauri::plugin::{Builder, PluginHandle, TauriPlugin};
+    use tauri::{Manager, Wry};
+
+    pub struct Bridge(pub PluginHandle<Wry>);
+
+    #[derive(serde::Serialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct FilePayload {
+        pub path: String,
+        pub file_name: String,
+        pub mime_type: String,
+    }
+
+    #[derive(serde::Deserialize)]
+    pub struct FileResult {
+        pub location: String,
+    }
+
+    pub fn init() -> TauriPlugin<Wry> {
+        Builder::<Wry>::new("stiksound-android")
+            .setup(|app, api| {
+                let handle = api.register_android_plugin("app.stiksound.android", "StikSoundPlugin")?;
+                app.manage(Bridge(handle));
+                Ok(())
+            })
+            .build()
+    }
+}
+
+#[cfg(target_os = "android")]
+async fn run_android_file_command(
+    app: &tauri::AppHandle,
+    command: &str,
+    file_name: String,
+    mime_type: String,
+    bytes: Vec<u8>,
+) -> Result<String, String> {
+    use tauri::Manager;
+    let safe_name = sanitize_file_name(&file_name)?;
+    let dest = app
+        .path()
+        .app_cache_dir()
+        .map_err(|e| e.to_string())?
+        .join("share")
+        .join(&safe_name);
+    atomic_publish_file(&dest, &bytes).map_err(|e| e.to_string())?;
+    let bridge = app.state::<android_bridge::Bridge>();
+    let result: android_bridge::FileResult = bridge
+        .0
+        .run_mobile_plugin_async(
+            command,
+            android_bridge::FilePayload {
+                path: dest.to_string_lossy().into_owned(),
+                file_name: safe_name,
+                mime_type,
+            },
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(result.location)
+}
+
+#[cfg(not(target_os = "android"))]
+async fn run_android_file_command(
+    _app: &tauri::AppHandle,
+    _command: &str,
+    _file_name: String,
+    _mime_type: String,
+    _bytes: Vec<u8>,
+) -> Result<String, String> {
+    Err("export-unsupported: Android only".to_string())
+}
+
+#[tauri::command]
+async fn cmd_android_save(
+    app: tauri::AppHandle,
+    file_name: String,
+    mime_type: String,
+    bytes: Vec<u8>,
+) -> Result<String, String> {
+    run_android_file_command(&app, "saveFile", file_name, mime_type, bytes).await
+}
+
+#[tauri::command]
+async fn cmd_android_share(
+    app: tauri::AppHandle,
+    file_name: String,
+    mime_type: String,
+    bytes: Vec<u8>,
+) -> Result<String, String> {
+    run_android_file_command(&app, "shareFile", file_name, mime_type, bytes).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(target_os = "windows")]
     ensure_isolated_webview2_data_dir();
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(android_bridge::init());
+
+    builder
         .invoke_handler(tauri::generate_handler![
             cmd_probe_image,
             cmd_probe_audio,
             cmd_save_export_to_downloads,
             cmd_copy_artifact_to_clipboard,
             cmd_fetch_myinstants,
-            cmd_fetch_url
+            cmd_fetch_url,
+            cmd_android_save,
+            cmd_android_share
         ])
         .run(tauri::generate_context!())
         .expect("error while running StikSound desktop application");

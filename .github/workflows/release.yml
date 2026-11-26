@@ -152,8 +152,14 @@ jobs:
           name: cli-assets
           path: release-assets/*
 
+  build-android:
+    uses: ./.github/workflows/android.yml
+    secrets: inherit
+    with:
+      version: ${{ startsWith(github.ref_name, 'v') && github.ref_name || github.event.inputs.tag }}
+
   publish-release:
-    needs: [build-extension, build-windows, build-macos, build-cli]
+    needs: [build-extension, build-windows, build-macos, build-cli, build-android]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -170,7 +176,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref_name, 'v') && github.ref_name || github.event.inputs.tag }}
-          name: StikSound ${{ startsWith(github.ref_name, 'v') && github.ref_name || github.event.inputs.tag }} — Windows, macOS, Chrome Extension & CLI
+          name: StikSound ${{ startsWith(github.ref_name, 'v') && github.ref_name || github.event.inputs.tag }} — Windows, macOS, Android, Chrome Extension & CLI
           generate_release_notes: true
           body: |
             ## 🌐 Versión Web (sin instalación) y Descargas (100% local, sin FFmpeg)
@@ -181,6 +187,7 @@ jobs:
             | --- | --- | --- |
             | **Windows 10/11 (64-bit)** | `StikSound-*-windows-x64.exe` *(portable)* o `*-setup.exe` *(instalador)* | Doble clic para abrir o instalar al instante. |
             | **macOS (Apple Silicon & Intel)** | `StikSound-*-macos-universal.dmg` o `.app.zip` | Arrastra `StikSound.app` a **Aplicaciones**. *(Si macOS muestra aviso de desarrollador no verificado: clic derecho → **Abrir**).* |
+            | **Android 10+** | `StikSound-*-android.apk` | Abre el APK en el teléfono y permite instalar apps de esta fuente. Pega enlaces de MyInstants o de audio, y comparte directo a WhatsApp. |
             | **Google Chrome / Edge / Brave** | `StikSound-*-chrome-extension.zip` | Descomprime el ZIP, abre `chrome://extensions/`, activa **Modo de desarrollador** y pulsa **Cargar descomprimida** seleccionando la carpeta descomprimida. |
 
             ### Qué incluye esta versión
@@ -211,6 +218,7 @@ jobs:
             | --- | --- | --- |
             | **Windows 10/11 (64-bit)** | `StikSound-*-windows-x64.exe` *(portable)* or `*-setup.exe` *(installer)* | Double-click to run or install immediately. |
             | **macOS (Apple Silicon & Intel)** | `StikSound-*-macos-universal.dmg` or `.app.zip` | Drag `StikSound.app` to **Applications**. *(If Gatekeeper warns about an unverified developer: right-click → **Open**).* |
+            | **Android 10+** | `StikSound-*-android.apk` | Open the APK on your phone and allow installs from this source. Paste MyInstants or audio links and share straight to WhatsApp. |
             | **Google Chrome / Edge / Brave** | `StikSound-*-chrome-extension.zip` | Unzip the archive, open `chrome://extensions/`, enable **Developer mode**, and click **Load unpacked** on the extracted folder. |
 
             #### Highlights
@@ -239,6 +247,7 @@ jobs:
             | --- | --- | --- |
             | **Windows 10/11 (64-bit)** | `StikSound-*-windows-x64.exe` *(portátil)* ou `*-setup.exe` *(instalador)* | Clique duas vezes para abrir ou instalar. |
             | **macOS (Apple Silicon & Intel)** | `StikSound-*-macos-universal.dmg` ou `.app.zip` | Arraste `StikSound.app` para **Aplicativos**. *(Se aparecer aviso de desenvolvedor não verificado: clique com o botão direito → **Abrir**).* |
+            | **Android 10+** | `StikSound-*-android.apk` | Abra o APK no celular e permita instalar desta fonte. Cole links do MyInstants ou de áudio e compartilhe direto no WhatsApp. |
             | **Google Chrome / Edge / Brave** | `StikSound-*-chrome-extension.zip` | Extraia o ZIP, abra `chrome://extensions/`, ative o **Modo do desenvolvedor** e clique em **Carregar sem compactação**. |
 
             #### Novidades incluídas

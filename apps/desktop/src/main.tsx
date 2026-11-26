@@ -11,6 +11,7 @@ import {
 import { WebMediaEngine } from "@stiksound/media-web";
 import { DirectAudioUrlProvider, MyInstantsProvider, type FetchLike } from "@stiksound/providers";
 import { StikSoundMinimalApp, type ShellBridge } from "@stiksound/ui";
+import { androidLabels } from "./android-labels";
 import "../../../packages/ui/src/styles.css";
 
 function isTauriRuntime(): boolean {
@@ -60,7 +61,9 @@ class DesktopMediaEngine extends WebMediaEngine implements MediaEngine {
   }
 }
 
-const shell: ShellBridge = {
+const isAndroid = /Android/i.test(navigator.userAgent);
+
+const desktopShell: ShellBridge = {
   async saveArtifact(artifact: ExportArtifact) {
     if (isTauriRuntime()) {
       await invoke("cmd_save_export_to_downloads", {
@@ -97,6 +100,31 @@ const shell: ShellBridge = {
   }
 };
 
+function androidFileCommand(command: "cmd_android_save" | "cmd_android_share") {
+  return (fileName: string, mimeType: string, bytes: Uint8Array) =>
+    invoke<string>(command, { fileName, mimeType, bytes: Array.from(bytes) });
+}
+
+const androidSave = androidFileCommand("cmd_android_save");
+const androidShare = androidFileCommand("cmd_android_share");
+
+const androidShell: ShellBridge = {
+  async saveArtifact(artifact: ExportArtifact) {
+    return androidSave(artifact.fileName, artifact.mimeType, artifact.bytes);
+  },
+  async shareArtifact(artifact: ExportArtifact) {
+    await androidShare(artifact.fileName, artifact.mimeType, artifact.bytes);
+    return "shared";
+  },
+  async saveProjectZip(zipBytes: Uint8Array, suggestedName: string) {
+    await androidSave(suggestedName, "application/zip", zipBytes);
+  }
+};
+
+const shell = isAndroid && isTauriRuntime() ? androidShell : desktopShell;
+if (isAndroid) {
+  void import("../../web/src/mobile.css");
+}
 const locale = detectLocale(navigator.language);
 
 createRoot(document.getElementById("root")!).render(
@@ -106,6 +134,7 @@ createRoot(document.getElementById("root")!).render(
       providers={providers}
       shell={shell}
       initialLocale={locale}
+      labelOverrides={isAndroid ? androidLabels : undefined}
     />
   </React.StrictMode>
 );

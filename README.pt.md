@@ -42,6 +42,9 @@ Você pode usar o **StikSound diretamente no navegador** sem instalar nada (func
 | **Colar links diretos de áudio (`MP3`, `WAV`, `OGG`, `M4A`)** | ✅ *(se o site permitir CORS)* | ✅ |
 | **WebM com transparência** | ❌ *(apenas MP4 na web/celular)* | ✅ |
 
+> [!TIP]
+> **App Android (APK, Android 10+):** baixe `StikSound-*-android.apk` nos [releases](https://github.com/SilverFeit/StikSound/releases/latest). Aceita links do MyInstants e de áudio direto sem bloqueio de CORS, salva na galeria (`Filmes/StikSound`) e compartilha direto no WhatsApp.
+
 ---
 
 ## O que o StikSound faz

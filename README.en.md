@@ -42,6 +42,9 @@ You can use **StikSound directly in your browser** with zero installation (works
 | **Paste direct audio links (`MP3`, `WAV`, `OGG`, `M4A`)** | ✅ *(if the host allows CORS)* | ✅ |
 | **Transparent WebM export** | ❌ *(MP4 only on web/mobile)* | ✅ |
 
+> [!TIP]
+> **Android app (APK, Android 10+):** grab `StikSound-*-android.apk` from the [releases](https://github.com/SilverFeit/StikSound/releases/latest). It accepts MyInstants and direct audio links with no CORS block, saves to your gallery (`Movies/StikSound`) and shares straight to WhatsApp.
+
 ---
 
 ## What StikSound Does
