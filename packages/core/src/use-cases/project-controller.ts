@@ -308,16 +308,17 @@ export class ProjectController {
   ): Promise<ProjectWorkspaceState> {
     const provider = this.providers.find((p) => p.canResolve(rawUrl));
     if (!provider) {
-      throw new StikSoundError("url-rejected", `No allowlisted provider handles URL: ${rawUrl}`);
+      throw new StikSoundError("url-rejected", `No provider handles URL: ${rawUrl}`);
     }
     const resolved = await provider.resolve(rawUrl);
     const sourceName = resolved.title ?? resolved.media_url.split("/").pop() ?? "sound.mp3";
+    const sourceType = provider.id === "myinstants" ? "myinstants" : "url";
     return this.importAudioFile(
       state,
       resolved.bytes,
       sourceName,
       {
-        type: "myinstants",
+        type: sourceType,
         page_url: resolved.page_url,
         media_url: resolved.media_url,
         title: resolved.title

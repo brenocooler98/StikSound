@@ -51,8 +51,8 @@ export interface StickerAsset {
 }
 
 export interface AudioSource {
-  /** "video-track": the sound was taken from the video sticker itself. */
-  type: "local" | "myinstants" | "video-track";
+  /** "video-track": the sound was taken from the video sticker itself. "url": a direct HTTPS audio link. */
+  type: "local" | "myinstants" | "url" | "video-track";
   page_url?: string | null;
   media_url?: string | null;
   title?: string | null;

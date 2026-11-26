@@ -214,11 +214,19 @@ export function validateProjectManifest(raw: unknown): ProjectManifest {
       throw new StikSoundError("package-invalid", "Missing audio.source.");
     }
     assertAllowedKeys(a.source, ["type", "page_url", "media_url", "title"], "audioSource");
-    if (a.source.type !== "local" && a.source.type !== "myinstants" && a.source.type !== "video-track") {
+    if (
+      a.source.type !== "local" &&
+      a.source.type !== "myinstants" &&
+      a.source.type !== "url" &&
+      a.source.type !== "video-track"
+    ) {
       throw new StikSoundError("package-invalid", "Invalid audio.source.type.");
     }
     if (a.source.type === "myinstants" && typeof a.source.media_url !== "string") {
       throw new StikSoundError("package-invalid", "MyInstants source requires media_url.");
+    }
+    if (a.source.type === "url" && typeof a.source.media_url !== "string") {
+      throw new StikSoundError("package-invalid", "URL source requires media_url.");
     }
     audioIds.add(a.id);
   }

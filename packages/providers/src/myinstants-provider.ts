@@ -1,8 +1,9 @@
 import { LIMITS, StikSoundError, type SoundProvider } from "@stiksound/core";
+import { fetchLimitedBytes, type FetchLike } from "./limited-fetch";
 import { extractMyInstantsFromHtml } from "./myinstants-extractor";
 import { validateMyInstantsUrl } from "./url-policy";
 
-export type FetchLike = typeof fetch;
+export type { FetchLike } from "./limited-fetch";
 
 const DIRECT_MEDIA_PATH_REGEX = /^\/media\/sounds\/[^/]+\.(mp3|wav|ogg|m4a)$/i;
 const INSTANT_PAGE_PATH_REGEX = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?instant\/[^/]+\/?$/i;
@@ -10,7 +11,7 @@ const INSTANT_PAGE_PATH_REGEX = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?instant\/[^/]+\
 export class MyInstantsProvider implements SoundProvider {
   public readonly id = "myinstants";
 
-  constructor(private readonly fetchFn: FetchLike = globalThis.fetch) {}
+  constructor(private readonly fetchFn: FetchLike = (input, init) => globalThis.fetch(input, init)) {}
 
   public canResolve(rawUrl: string): boolean {
     try {
@@ -65,87 +66,12 @@ export class MyInstantsProvider implements SoundProvider {
     targetUrl: string,
     maxBytes: number = LIMITS.MAX_AUDIO_BYTES
   ): Promise<Uint8Array> {
-    let currentUrl = validateMyInstantsUrl(targetUrl).toString();
-
-    for (let redirectCount = 0; redirectCount <= LIMITS.MAX_REDIRECTS; redirectCount++) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), LIMITS.FETCH_TIMEOUT_MS);
-      let response: Response;
-      try {
-        response = await this.fetchFn(currentUrl, {
-          method: "GET",
-          redirect: "manual",
-          credentials: "omit",
-          signal: controller.signal
-        });
-      } catch (err) {
-        clearTimeout(timer);
-        if (err instanceof StikSoundError) throw err;
-        throw new StikSoundError("remote-unavailable", "Network error or timeout while contacting MyInstants.");
-      }
-      clearTimeout(timer);
-
-      if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get("location");
-        if (!location || redirectCount === LIMITS.MAX_REDIRECTS) {
-          throw new StikSoundError("url-rejected", "Too many redirects or missing Location header.");
-        }
-        const resolvedRedirect = new URL(location, currentUrl).toString();
-        currentUrl = validateMyInstantsUrl(resolvedRedirect).toString();
-        continue;
-      }
-
-      if (response.status === 413) {
-        throw new StikSoundError("file-too-large", "Remote response exceeds 25 MB limit.");
-      }
-      if (response.status === 403) {
-        throw new StikSoundError("url-rejected", "URL rejected by MyInstants security policy.");
-      }
-      if (!response.ok) {
-        throw new StikSoundError("remote-unavailable", `HTTP ${response.status} from MyInstants.`);
-      }
-
-      const contentLengthHeader = response.headers.get("content-length");
-      if (contentLengthHeader) {
-        const len = Number(contentLengthHeader);
-        if (Number.isFinite(len) && len > maxBytes) {
-          throw new StikSoundError("file-too-large", `Remote response exceeds ${maxBytes} bytes.`);
-        }
-      }
-
-      if (!response.body) {
-        const arr = new Uint8Array(await response.arrayBuffer());
-        if (arr.byteLength > maxBytes) {
-          throw new StikSoundError("file-too-large", `Remote body exceeds ${maxBytes} bytes.`);
-        }
-        return arr;
-      }
-
-      const reader = response.body.getReader();
-      const chunks: Uint8Array[] = [];
-      let total = 0;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) {
-          total += value.byteLength;
-          if (total > maxBytes) {
-            await reader.cancel();
-            throw new StikSoundError("file-too-large", `Remote stream exceeded ${maxBytes} bytes.`);
-          }
-          chunks.push(value);
-        }
-      }
-
-      const out = new Uint8Array(total);
-      let offset = 0;
-      for (const c of chunks) {
-        out.set(c, offset);
-        offset += c.byteLength;
-      }
-      return out;
-    }
-
-    throw new StikSoundError("url-rejected", "Redirect limit exceeded.");
+    const result = await fetchLimitedBytes(targetUrl, {
+      fetchFn: this.fetchFn,
+      validate: validateMyInstantsUrl,
+      maxBytes,
+      sourceLabel: "MyInstants"
+    });
+    return result.bytes;
   }
 }

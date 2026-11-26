@@ -18,9 +18,15 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["downloads", "storage"],
+  "permissions": [
+    "downloads",
+    "storage"
+  ],
   "host_permissions": [
     "https://www.myinstants.com/*",
     "https://myinstants.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
   ]
 }

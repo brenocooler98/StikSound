@@ -46,8 +46,8 @@ export interface ShellBridge {
 export interface PlatformOptions {
   /** Offer transparent WebM output. Mobile Safari cannot encode it. Default true. */
   transparentVideo?: boolean;
-  /** Show the MyInstants URL field. Plain web pages are blocked by CORS. Default true. */
-  myInstantsUrl?: boolean;
+  /** Show the audio URL field (MyInstants or direct HTTPS audio links). Default true. */
+  audioUrl?: boolean;
   /** Offer short video clips (MP4/MOV/WebM) in the sticker picker. Needs the web media engine. Default false. */
   videoStickers?: boolean;
 }
@@ -110,7 +110,7 @@ export const StikSoundMinimalApp: React.FC<StikSoundMinimalAppProps> = ({
   appVersion = "1.1.3"
 }) => {
   const allowTransparent = platform?.transparentVideo !== false;
-  const allowMyInstantsUrl = platform?.myInstantsUrl !== false;
+  const allowAudioUrl = platform?.audioUrl !== false;
   const allowVideoStickers = platform?.videoStickers === true;
   const controller = useMemo(() => new ProjectController(engine, providers), [engine, providers]);
   const [locale, setLocale] = useState<LocaleCode>(initialLocale);
@@ -269,7 +269,7 @@ export const StikSoundMinimalApp: React.FC<StikSoundMinimalAppProps> = ({
     [controller, project, effectiveMaxAudioMs, handleError, stopPlayback]
   );
 
-  const importMyInstantsUrl = useCallback(
+  const importAudioUrl = useCallback(
     async (rawUrl: string) => {
       stopPlayback();
       setIsBusy(true);
@@ -336,13 +336,13 @@ export const StikSoundMinimalApp: React.FC<StikSoundMinimalAppProps> = ({
         return;
       }
       const text = e.clipboardData?.getData("text/plain")?.trim();
-      if (allowMyInstantsUrl && text && /^https?:\/\//i.test(text)) {
+      if (allowAudioUrl && text && /^https?:\/\//i.test(text)) {
         e.preventDefault();
         setUrlInput(text);
-        await importMyInstantsUrl(text);
+        await importAudioUrl(text);
       }
     },
-    [importStickerBytes, importMyInstantsUrl, allowMyInstantsUrl]
+    [importStickerBytes, importAudioUrl, allowAudioUrl]
   );
 
   useEffect(() => {
@@ -954,10 +954,10 @@ export const StikSoundMinimalApp: React.FC<StikSoundMinimalAppProps> = ({
         peaks={project.waveformPeaks}
         isPlaying={isPlaying}
         isBusy={isBusy}
-        showUrlInput={allowMyInstantsUrl}
+        showUrlInput={allowAudioUrl}
         urlInput={urlInput}
         onUrlInputChange={setUrlInput}
-        onSubmitUrl={importMyInstantsUrl}
+        onSubmitUrl={importAudioUrl}
         onSelectAudioFile={async (f) => importAudioBytes(new Uint8Array(await f.arrayBuffer()), f.name)}
         onChangeRange={handleRangeChange}
         onChangeMaxWindowMs={handleMaxDurationChange}

@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { detectLocale, type ExportArtifact, type LocaleCode } from "@stiksound/core";
 import { WebMediaEngine } from "@stiksound/media-web";
+import { DirectAudioUrlProvider, MyInstantsProvider } from "@stiksound/providers";
 import {
   StikSoundMinimalApp,
   type ShareOutcome,
@@ -15,8 +16,9 @@ import "./mobile.css";
  * StikSound web / PWA shell, aimed at iPhone Safari ("Add to Home Screen").
  *
  * Differences from the Chrome extension shell:
- * - No MyInstants links: a plain web page cannot read myinstants.com (no CORS headers),
- *   and routing it through a proxy would break the "nothing leaves your device" promise.
+ * - Audio links are fetched straight from the browser, so they only work when the host sends
+ *   CORS headers (most CDNs, GitHub raw, Discord attachments...). myinstants.com does not, and
+ *   routing it through a proxy would break the "nothing leaves your device" promise.
  * - Output goes through the system share sheet (WhatsApp, Save Video, Save to Files)
  *   because iOS has no way to put a video file on the clipboard from a web page.
  * - No transparent WebM: Safari cannot encode VP9 with alpha.
@@ -94,6 +96,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Crear el video y compartirlo",
     exportDisabledMissingAudio: "Agrega un audio (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Elegir audio (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Pega un enlace directo de audio (MP3, WAV...)",
     copyAgainBtn: "Compartir",
     downloadTooltip: "Guardar",
     downloadBtnLabel: "Guardar",
@@ -115,6 +118,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Make the video and share it",
     exportDisabledMissingAudio: "Add a sound (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Choose sound (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Paste a direct audio link (MP3, WAV...)",
     copyAgainBtn: "Share",
     downloadTooltip: "Save",
     downloadBtnLabel: "Save",
@@ -136,6 +140,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Criar o vídeo e compartilhar",
     exportDisabledMissingAudio: "Adicione um áudio (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Escolher áudio (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Cole um link direto de áudio (MP3, WAV...)",
     copyAgainBtn: "Compartilhar",
     downloadTooltip: "Salvar",
     downloadBtnLabel: "Salvar",
@@ -157,6 +162,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Créer la vidéo et la partager",
     exportDisabledMissingAudio: "Ajoutez un audio (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Choisir un son (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Collez un lien audio direct (MP3, WAV...)",
     copyAgainBtn: "Partager",
     downloadTooltip: "Enregistrer",
     downloadBtnLabel: "Enregistrer",
@@ -177,6 +183,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Video erstellen und teilen",
     exportDisabledMissingAudio: "Ton hinzufügen (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Ton wählen (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Direkten Audio-Link einfügen (MP3, WAV...)",
     copyAgainBtn: "Teilen",
     downloadTooltip: "Speichern",
     downloadBtnLabel: "Speichern",
@@ -197,6 +204,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Crea il video e condividilo",
     exportDisabledMissingAudio: "Aggiungi un audio (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Scegli audio (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Incolla un link audio diretto (MP3, WAV...)",
     copyAgainBtn: "Condividi",
     downloadTooltip: "Salva",
     downloadBtnLabel: "Salva",
@@ -217,6 +225,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "Создать видео и поделиться",
     exportDisabledMissingAudio: "Добавьте аудио (MP3, M4A, WAV)",
     audioPickBtn: "🎵 Выбрать звук (MP3, M4A, WAV)",
+    audioInputPlaceholder: "Вставьте прямую ссылку на аудио (MP3, WAV...)",
     copyAgainBtn: "Поделиться",
     downloadTooltip: "Сохранить",
     downloadBtnLabel: "Сохранить",
@@ -237,6 +246,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "生成视频并分享",
     exportDisabledMissingAudio: "请添加音频（MP3、M4A、WAV）",
     audioPickBtn: "🎵 选择音频（MP3、M4A、WAV）",
+    audioInputPlaceholder: "粘贴音频直链（MP3、WAV...）",
     copyAgainBtn: "分享",
     downloadTooltip: "保存",
     downloadBtnLabel: "保存",
@@ -257,6 +267,7 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
     exportTooltip: "إنشاء الفيديو ومشاركته",
     exportDisabledMissingAudio: "أضف ملفًا صوتيًا (MP3, M4A, WAV)",
     audioPickBtn: "🎵 اختر صوتًا (MP3, M4A, WAV)",
+    audioInputPlaceholder: "الصق رابط صوت مباشر (MP3, WAV...)",
     copyAgainBtn: "مشاركة",
     downloadTooltip: "حفظ",
     downloadBtnLabel: "حفظ",
@@ -276,15 +287,16 @@ const webLabels: Record<LocaleCode, Partial<UiLabels>> = {
 };
 
 const locale: LocaleCode = detectLocale(navigator.language);
+const providers = [new MyInstantsProvider(), new DirectAudioUrlProvider()];
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <StikSoundMinimalApp
       engine={new WebMediaEngine()}
-      providers={[]}
+      providers={providers}
       shell={shell}
       initialLocale={locale}
-      platform={{ transparentVideo: false, myInstantsUrl: false, videoStickers: true }}
+      platform={{ transparentVideo: false, videoStickers: true }}
       labelOverrides={webLabels}
     />
   </React.StrictMode>

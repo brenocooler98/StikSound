@@ -52,7 +52,7 @@ stiksound probe ./saved.stiksound.zip
 
 ### `stiksound create <image> [options]`
 
-Creates a sticker from a local image (`PNG`, `JPG`, `WebP`, `GIF`) or short video clip (`MP4`, `MOV`, `WebM`) plus a local audio file (`MP3`, `WAV`, `OGG`, `M4A`, `AAC`) or a `myinstants.com` URL.
+Creates a sticker from a local image (`PNG`, `JPG`, `WebP`, `GIF`) or short video clip (`MP4`, `MOV`, `WebM`) plus a local audio file (`MP3`, `WAV`, `OGG`, `M4A`, `AAC`) or a public HTTPS link (a `myinstants.com` page or a direct audio file URL).
 
 ```bash
 # Default 10s MP4 in ~/Downloads/StikSound
@@ -66,6 +66,9 @@ stiksound create cat.png -a song.mp3 --start 0:12.5 --end 17.5s --crop-x 0.2 --m
 
 # Download audio directly from MyInstants (strict HTTPS allowlist + private IP protection)
 stiksound create cat.png -u "https://www.myinstants.com/en/instant/vine-boom-sound-70972/"
+
+# Download audio from any direct HTTPS link
+stiksound create cat.png -u "https://example.com/sounds/boom.mp3"
 
 # Transparent WebM (VP9 + Opus)
 stiksound create cat.png -a boom.mp3 --profile video-webm-alpha
@@ -85,7 +88,7 @@ Key flags:
 | Flag | Default | Description |
 | --- | --- | --- |
 | `-a, --audio <path>` | | Local audio file (max 25 MB / 3 min) |
-| `-u, --url <url>` | | MyInstants instant page or `/media/sounds/` HTTPS URL |
+| `-u, --url <url>` | | MyInstants instant page or direct HTTPS audio link (`MP3`, `WAV`, `OGG`, `M4A`) |
 | `--start <time>`, `--end <time>` | `0` .. max | Trim range (`1500`, `1500ms`, `1.5s`, `0:05`) |
 | `--trim <start\|loudest>` | `start` | Auto-trim strategy when `--start`/`--end` are omitted |
 | `-d, --max-duration <5\|10>` | `10` | Maximum fragment duration in seconds |
@@ -137,5 +140,5 @@ In MCP mode, all file paths must be absolute or start with `~/`.
 ## Security and privacy
 
 - All media processing runs locally on your machine.
-- Outbound network access is restricted to `myinstants.com` over HTTPS (`MyInstantsProvider` allowlist, max 2 redirects, 25 MB / 20 s limits), with pre-connection DNS validation rejecting loopback, private, link-local, and reserved IP addresses.
+- Outbound network access only happens for the audio link you pass: HTTPS only, port 443, no userinfo, no raw IPs or local hostnames, max 2 redirects, 25 MB / 20 s limits, and pre-connection DNS validation rejecting loopback, private, link-local, and reserved IP addresses. HTML pages are rejected unless they are MyInstants instant pages.
 - FFmpeg and clipboard utilities are always invoked with argument arrays (`shell: false`), never interpolated into a shell command string.

@@ -216,6 +216,40 @@ describe("packages/core domain and use cases", () => {
     expect(() => validateProjectManifest(badManifest)).toThrowError(/package-invalid/);
   });
 
+  it("imports audio from a direct URL provider and keeps the url source through save/open", async () => {
+    const provider = {
+      id: "url",
+      canResolve: (raw: string) => raw.startsWith("https://cdn.example.com/"),
+      resolve: async () => ({
+        page_url: null,
+        media_url: "https://cdn.example.com/boom.mp3",
+        title: "boom",
+        bytes: new Uint8Array([1, 2, 3, 4])
+      })
+    };
+    const ctrl = new ProjectController(makeFakeEngine(), [provider]);
+    let project = createProject("url");
+    project = await ctrl.importSticker(project, new Uint8Array([0x89, 0x50, 0x4e, 0x47]), "ok.png");
+    project = await ctrl.importAudioUrl(project, "https://cdn.example.com/boom.mp3");
+    expect(project.manifest.audios[0]!.source).toEqual({
+      type: "url",
+      page_url: null,
+      media_url: "https://cdn.example.com/boom.mp3",
+      title: "boom"
+    });
+
+    const reopened = await ctrl.openProject(await ctrl.saveProject(project));
+    expect(reopened.manifest.audios[0]!.source.type).toBe("url");
+
+    await expect(ctrl.importAudioUrl(project, "https://other.example.com/a.mp3")).rejects.toMatchObject({
+      code: "url-rejected"
+    });
+
+    const missingMedia = structuredClone(project.manifest);
+    missingMedia.audios[0]!.source.media_url = null;
+    expect(() => validateProjectManifest(missingMedia)).toThrowError(/package-invalid/);
+  });
+
   it("computes 1:1 square crop from center by default and respects input-driven resolution <= 512", () => {
     // 1000x500 wide image -> cropSide 500, outputSize 500, centered srcX = 250
     expect(computeSquareCrop(1000, 500)).toEqual({

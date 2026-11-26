@@ -9,8 +9,8 @@ use stiksound_image_engine::{probe_image, ImageProbeInfo};
 use stiksound_project_store::atomic_publish_file;
 use url::Url;
 
-const MAX_MYINSTANTS_BYTES: usize = 25 * 1024 * 1024;
-const MAX_MYINSTANTS_REDIRECTS: usize = 2;
+const MAX_REMOTE_BYTES: usize = 25 * 1024 * 1024;
+const MAX_REMOTE_REDIRECTS: usize = 2;
 
 fn is_disallowed_ip(ip: IpAddr) -> bool {
     match ip {
@@ -35,7 +35,9 @@ fn is_disallowed_ip(ip: IpAddr) -> bool {
     }
 }
 
-fn validate_myinstants_url(raw: &str) -> Result<Url, String> {
+const BLOCKED_HOST_SUFFIXES: [&str; 7] = [".localhost", ".local", ".internal", ".lan", ".home", ".arpa", ".onion"];
+
+fn validate_public_url(raw: &str) -> Result<Url, String> {
     let parsed = Url::parse(raw.trim()).map_err(|_| "url-rejected: malformed URL".to_string())?;
     if parsed.scheme() != "https" {
         return Err("url-rejected: only https allowed".to_string());
@@ -48,6 +50,27 @@ fn validate_myinstants_url(raw: &str) -> Result<Url, String> {
             return Err("url-rejected: non-443 port forbidden".to_string());
         }
     }
+    match parsed.host() {
+        Some(url::Host::Domain(_)) => {}
+        Some(_) => return Err("url-rejected: raw IP addresses are forbidden".to_string()),
+        None => return Err("url-rejected: missing host".to_string()),
+    }
+    let host = parsed
+        .host_str()
+        .ok_or_else(|| "url-rejected: missing host".to_string())?
+        .trim_end_matches('.')
+        .to_ascii_lowercase();
+    if host == "localhost"
+        || !host.contains('.')
+        || BLOCKED_HOST_SUFFIXES.iter().any(|suffix| host.ends_with(suffix))
+    {
+        return Err(format!("url-rejected: non-public host ({host})"));
+    }
+    Ok(parsed)
+}
+
+fn validate_myinstants_url(raw: &str) -> Result<Url, String> {
+    let parsed = validate_public_url(raw)?;
     let host = parsed
         .host_str()
         .ok_or_else(|| "url-rejected: missing host".to_string())?
@@ -58,8 +81,7 @@ fn validate_myinstants_url(raw: &str) -> Result<Url, String> {
     Ok(parsed)
 }
 
-#[tauri::command]
-async fn cmd_fetch_myinstants(url: String) -> Result<Vec<u8>, String> {
+async fn fetch_limited(url: &str, validate: fn(&str) -> Result<Url, String>) -> Result<Vec<u8>, String> {
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .timeout(Duration::from_secs(20))
@@ -67,9 +89,9 @@ async fn cmd_fetch_myinstants(url: String) -> Result<Vec<u8>, String> {
         .build()
         .map_err(|e| format!("remote-unavailable: {e}"))?;
 
-    let mut current = validate_myinstants_url(&url)?;
+    let mut current = validate(url)?;
 
-    for hop in 0..=MAX_MYINSTANTS_REDIRECTS {
+    for hop in 0..=MAX_REMOTE_REDIRECTS {
         let host = current
             .host_str()
             .ok_or_else(|| "url-rejected: missing host".to_string())?;
@@ -95,7 +117,7 @@ async fn cmd_fetch_myinstants(url: String) -> Result<Vec<u8>, String> {
 
         let status = resp.status();
         if status.is_redirection() {
-            if hop == MAX_MYINSTANTS_REDIRECTS {
+            if hop == MAX_REMOTE_REDIRECTS {
                 return Err("url-rejected: too many redirects".to_string());
             }
             let loc = resp
@@ -106,7 +128,7 @@ async fn cmd_fetch_myinstants(url: String) -> Result<Vec<u8>, String> {
             let next_url = current
                 .join(loc)
                 .map_err(|_| "url-rejected: invalid redirect location".to_string())?;
-            current = validate_myinstants_url(next_url.as_str())?;
+            current = validate(next_url.as_str())?;
             continue;
         }
 
@@ -115,22 +137,37 @@ async fn cmd_fetch_myinstants(url: String) -> Result<Vec<u8>, String> {
         }
 
         if let Some(len) = resp.content_length() {
-            if len as usize > MAX_MYINSTANTS_BYTES {
+            if len as usize > MAX_REMOTE_BYTES {
                 return Err("file-too-large: remote response exceeds 25 MB".to_string());
             }
         }
 
-        let bytes = resp
-            .bytes()
+        let mut resp = resp;
+        let mut body: Vec<u8> = Vec::new();
+        while let Some(chunk) = resp
+            .chunk()
             .await
-            .map_err(|e| format!("remote-unavailable: {e}"))?;
-        if bytes.len() > MAX_MYINSTANTS_BYTES {
-            return Err("file-too-large: remote body exceeds 25 MB".to_string());
+            .map_err(|e| format!("remote-unavailable: {e}"))?
+        {
+            if body.len() + chunk.len() > MAX_REMOTE_BYTES {
+                return Err("file-too-large: remote body exceeds 25 MB".to_string());
+            }
+            body.extend_from_slice(&chunk);
         }
-        return Ok(bytes.to_vec());
+        return Ok(body);
     }
 
     Err("url-rejected: redirect limit exceeded".to_string())
+}
+
+#[tauri::command]
+async fn cmd_fetch_myinstants(url: String) -> Result<Vec<u8>, String> {
+    fetch_limited(&url, validate_myinstants_url).await
+}
+
+#[tauri::command]
+async fn cmd_fetch_url(url: String) -> Result<Vec<u8>, String> {
+    fetch_limited(&url, validate_public_url).await
 }
 
 #[tauri::command]
@@ -252,7 +289,8 @@ pub fn run() {
             cmd_probe_audio,
             cmd_save_export_to_downloads,
             cmd_copy_artifact_to_clipboard,
-            cmd_fetch_myinstants
+            cmd_fetch_myinstants,
+            cmd_fetch_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running StikSound desktop application");

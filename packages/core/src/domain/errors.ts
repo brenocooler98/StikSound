@@ -134,15 +134,15 @@ export const ERROR_CATALOG: Record<StikSoundErrorCode, Record<LocaleCode, Locali
   "unsupported-audio": {
     es: {
       title: "No se pudo leer este audio o el formato no es compatible.",
-      action: "Usa un archivo MP3, WAV, OGG, M4A o pega un enlace válido de MyInstants."
+      action: "Usa un archivo MP3, WAV, OGG, M4A o pega un enlace de MyInstants o de un audio directo."
     },
     en: {
       title: "Could not decode this audio or the format is unsupported.",
-      action: "Use an MP3, WAV, OGG, M4A file or paste a valid MyInstants link."
+      action: "Use an MP3, WAV, OGG, M4A file or paste a MyInstants or direct audio link."
     },
     pt: {
       title: "Não foi possível ler este áudio ou o formato não é compatível.",
-      action: "Use um arquivo MP3, WAV, OGG, M4A ou cole um link válido do MyInstants."
+      action: "Use um arquivo MP3, WAV, OGG, M4A ou cole um link do MyInstants ou de um áudio direto."
     },
     fr: {
       title: "Impossible de décoder cet audio ou format non pris en charge.",
@@ -323,78 +323,78 @@ export const ERROR_CATALOG: Record<StikSoundErrorCode, Record<LocaleCode, Locali
   },
   "url-rejected": {
     es: {
-      title: "Enlace rechazado por seguridad: solo se permiten URLs HTTPS de MyInstants.",
-      action: "Copia el enlace directo de myinstants.com e inténtalo de nuevo."
+      title: "Enlace rechazado por seguridad: solo se permiten URLs HTTPS públicas de MyInstants o de un archivo de audio directo.",
+      action: "Copia el enlace de myinstants.com o un enlace HTTPS directo a un MP3, WAV, OGG o M4A e inténtalo de nuevo."
     },
     en: {
-      title: "URL rejected by security policy: only HTTPS MyInstants links are allowed.",
-      action: "Copy a valid myinstants.com link and try again."
+      title: "URL rejected by security policy: only public HTTPS links to MyInstants or a direct audio file are allowed.",
+      action: "Copy a myinstants.com link or a direct HTTPS link to an MP3, WAV, OGG or M4A file and try again."
     },
     pt: {
-      title: "Link rejeitado por segurança: apenas URLs HTTPS do MyInstants são permitidos.",
-      action: "Copie um link válido de myinstants.com e tente novamente."
+      title: "Link rejeitado por segurança: apenas URLs HTTPS públicas do MyInstants ou de um arquivo de áudio direto são permitidas.",
+      action: "Copie um link de myinstants.com ou um link HTTPS direto para um MP3, WAV, OGG ou M4A e tente novamente."
     },
     fr: {
-      title: "URL rejetée par sécurité : seuls les liens HTTPS MyInstants sont autorisés.",
-      action: "Copiez un lien myinstants.com valide et réessayez."
+      title: "URL rejetée par sécurité : seuls les liens HTTPS publics MyInstants ou vers un fichier audio direct sont autorisés.",
+      action: "Copiez un lien myinstants.com ou un lien HTTPS direct vers un MP3, WAV, OGG ou M4A et réessayez."
     },
     de: {
-      title: "URL aus Sicherheitsgründen abgelehnt: Nur HTTPS-Links von MyInstants sind erlaubt.",
-      action: "Kopiere einen gültigen myinstants.com-Link und versuche es erneut."
+      title: "URL aus Sicherheitsgründen abgelehnt: Nur öffentliche HTTPS-Links zu MyInstants oder direkt zu einer Audiodatei sind erlaubt.",
+      action: "Kopiere einen myinstants.com-Link oder einen direkten HTTPS-Link zu einer MP3-, WAV-, OGG- oder M4A-Datei und versuche es erneut."
     },
     it: {
-      title: "URL rifiutato per sicurezza: sono consentiti solo link HTTPS di MyInstants.",
-      action: "Copia un link myinstants.com valido e riprova."
+      title: "URL rifiutato per sicurezza: sono consentiti solo link HTTPS pubblici di MyInstants o a un file audio diretto.",
+      action: "Copia un link myinstants.com o un link HTTPS diretto a un file MP3, WAV, OGG o M4A e riprova."
     },
     ru: {
-      title: "Ссылка отклонена политикой безопасности: разрешены только HTTPS-ссылки MyInstants.",
-      action: "Скопируйте корректную ссылку myinstants.com и повторите попытку."
+      title: "Ссылка отклонена политикой безопасности: разрешены только публичные HTTPS-ссылки MyInstants или прямые ссылки на аудиофайл.",
+      action: "Скопируйте ссылку myinstants.com или прямую HTTPS-ссылку на MP3, WAV, OGG или M4A и повторите попытку."
     },
     zh: {
-      title: "出于安全策略已拒绝该链接：仅允许 MyInstants 的 HTTPS 链接。",
-      action: "请复制有效的 myinstants.com 链接后重试。"
+      title: "出于安全策略已拒绝该链接：仅允许 MyInstants 或直接指向音频文件的公共 HTTPS 链接。",
+      action: "请复制 myinstants.com 链接或直接指向 MP3、WAV、OGG、M4A 文件的 HTTPS 链接后重试。"
     },
     ar: {
-      title: "تم رفض الرابط لأسباب أمنية: يُسمح فقط بروابط HTTPS من MyInstants.",
-      action: "انسخ رابط myinstants.com صالحًا وحاول مرة أخرى."
+      title: "تم رفض الرابط لأسباب أمنية: يُسمح فقط بروابط HTTPS العامة من MyInstants أو المباشرة لملف صوتي.",
+      action: "انسخ رابط myinstants.com أو رابط HTTPS مباشرًا لملف MP3 أو WAV أو OGG أو M4A وحاول مرة أخرى."
     }
   },
   "remote-unavailable": {
     es: {
-      title: "No se pudo obtener el sonido desde MyInstants.",
-      action: "Verifica tu conexión o que el sonido siga disponible, o usa un audio local."
+      title: "No se pudo obtener el sonido desde el enlace.",
+      action: "Verifica tu conexión o que el sonido siga disponible (en la versión web, el sitio debe permitir descargas CORS), o usa un audio local."
     },
     en: {
-      title: "Could not retrieve the sound from MyInstants.",
-      action: "Check your connection or that the sound still exists, or drop a local audio file."
+      title: "Could not retrieve the sound from the link.",
+      action: "Check your connection or that the sound still exists (on the web version the site must allow CORS downloads), or drop a local audio file."
     },
     pt: {
-      title: "Não foi possível obter o som do MyInstants.",
-      action: "Verifique sua conexão ou se o som ainda existe, ou use um áudio local."
+      title: "Não foi possível obter o som do link.",
+      action: "Verifique sua conexão ou se o som ainda existe (na versão web o site precisa permitir downloads CORS), ou use um áudio local."
     },
     fr: {
-      title: "Impossible de récupérer le son depuis MyInstants.",
-      action: "Vérifiez votre connexion ou la disponibilité du son, ou utilisez un fichier local."
+      title: "Impossible de récupérer le son depuis le lien.",
+      action: "Vérifiez votre connexion ou la disponibilité du son (en version web, le site doit autoriser CORS), ou utilisez un fichier local."
     },
     de: {
-      title: "Der Ton konnte nicht von MyInstants geladen werden.",
-      action: "Prüfe deine Verbindung oder ob der Sound noch existiert, oder nutze eine lokale Datei."
+      title: "Der Ton konnte nicht über den Link geladen werden.",
+      action: "Prüfe deine Verbindung oder ob der Sound noch existiert (in der Web-Version muss die Seite CORS erlauben), oder nutze eine lokale Datei."
     },
     it: {
-      title: "Impossibile recuperare l'audio da MyInstants.",
-      action: "Controlla la connessione o che il suono sia disponibile, oppure usa un file locale."
+      title: "Impossibile recuperare l'audio dal link.",
+      action: "Controlla la connessione o che il suono sia disponibile (nella versione web il sito deve consentire CORS), oppure usa un file locale."
     },
     ru: {
-      title: "Не удалось загрузить звук с MyInstants.",
-      action: "Проверьте подключение и доступность звука или используйте локальный аудиофайл."
+      title: "Не удалось загрузить звук по ссылке.",
+      action: "Проверьте подключение и доступность звука (в веб-версии сайт должен разрешать CORS) или используйте локальный аудиофайл."
     },
     zh: {
-      title: "无法从 MyInstants 获取该声音。",
-      action: "请检查网络连接或确认该声音仍可用，或改用本地音频文件。"
+      title: "无法通过该链接获取声音。",
+      action: "请检查网络连接或确认该声音仍可用（网页版要求该网站允许 CORS 下载），或改用本地音频文件。"
     },
     ar: {
-      title: "تعذر جلب الصوت من MyInstants.",
-      action: "تحقق من اتصالك أو من أن الصوت ما زال متاحًا، أو استخدم ملفًا صوتيًا محليًا."
+      title: "تعذر جلب الصوت من الرابط.",
+      action: "تحقق من اتصالك أو من أن الصوت ما زال متاحًا (في نسخة الويب يجب أن يسمح الموقع بـ CORS)، أو استخدم ملفًا صوتيًا محليًا."
     }
   },
   "trim-out-of-range": {

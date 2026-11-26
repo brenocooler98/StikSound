@@ -10,7 +10,7 @@ export interface TimelineTrimBarProps {
   peaks: PeakBuckets | null;
   isPlaying: boolean;
   isBusy: boolean;
-  /** Hide the MyInstants URL field and show only the file button. Default true. */
+  /** Hide the audio URL field and show only the file button. Default true. */
   showUrlInput?: boolean;
   urlInput: string;
   onUrlInputChange: (value: string) => void;
@@ -152,7 +152,7 @@ export const TimelineTrimBar: React.FC<TimelineTrimBarProps> = ({
           {showUrlInput && (
             <input
               type="url"
-              data-testid="myinstants-url-input"
+              data-testid="audio-url-input"
               className="stik-url-input"
               value={urlInput}
               disabled={isBusy}

@@ -32,7 +32,9 @@ export function isPrivateOrReservedIp(ip: string): boolean {
   return false;
 }
 
-export function validateMyInstantsUrl(rawUrl: string): URL {
+const BLOCKED_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".lan", ".home", ".arpa", ".onion"];
+
+export function validatePublicHttpsUrl(rawUrl: string): URL {
   const trimmed = rawUrl.trim();
   if (!trimmed) {
     throw new StikSoundError("url-rejected", "Empty URL.");
@@ -55,13 +57,26 @@ export function validateMyInstantsUrl(rawUrl: string): URL {
     throw new StikSoundError("url-rejected", `Non-443 port rejected: ${parsed.port}`);
   }
 
-  const host = parsed.hostname.toLowerCase();
-  if (host === "localhost" || IPV4_PATTERN.test(host) || host.includes(":")) {
+  const host = parsed.hostname.toLowerCase().replace(/\.$/, "");
+  if (host === "localhost" || IPV4_PATTERN.test(host) || host.includes(":") || host.startsWith("[")) {
     throw new StikSoundError("url-rejected", `Raw IP or localhost rejected: ${host}`);
   }
-  if (!(ALLOWED_MYINSTANTS_HOSTS as readonly string[]).includes(host)) {
-    throw new StikSoundError("url-rejected", `Host not on MyInstants allowlist: ${host}`);
+  if (!host.includes(".") || BLOCKED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))) {
+    throw new StikSoundError("url-rejected", `Non-public host rejected: ${host}`);
   }
 
+  return parsed;
+}
+
+export function isMyInstantsHost(hostname: string): boolean {
+  return (ALLOWED_MYINSTANTS_HOSTS as readonly string[]).includes(hostname.toLowerCase());
+}
+
+export function validateMyInstantsUrl(rawUrl: string): URL {
+  const parsed = validatePublicHttpsUrl(rawUrl);
+  const host = parsed.hostname.toLowerCase();
+  if (!isMyInstantsHost(host)) {
+    throw new StikSoundError("url-rejected", `Host not on MyInstants allowlist: ${host}`);
+  }
   return parsed;
 }

@@ -13,7 +13,7 @@ import {
   type SoundProvider
 } from "@stiksound/core";
 import { sniffAudioContainer, sniffVideoContainer } from "@stiksound/media-web";
-import { MyInstantsProvider } from "@stiksound/providers";
+import { DirectAudioUrlProvider, MyInstantsProvider } from "@stiksound/providers";
 import { copyFileToClipboard, type ClipboardCopier } from "./clipboard";
 import {
   NodeMediaEngine,
@@ -76,7 +76,8 @@ export interface ServiceOptions {
 
 export function createServiceContext(options: ServiceOptions = {}): ServiceContext {
   const engine = options.engine ?? new NodeMediaEngine();
-  const providers = options.providers ?? [new MyInstantsProvider(createGuardedFetch())];
+  const guardedFetch = createGuardedFetch();
+  const providers = options.providers ?? [new MyInstantsProvider(guardedFetch), new DirectAudioUrlProvider(guardedFetch)];
   return {
     engine,
     controller: new ProjectController(engine, providers),
@@ -329,6 +330,7 @@ async function buildExportResult(
 export interface CreateSoundStickerOptions {
   imagePath: string;
   audioPath?: string;
+  audioUrl?: string;
   myinstantsUrl?: string;
   startMs?: number;
   endMs?: number;
@@ -367,8 +369,12 @@ export async function createSoundSticker(
   }
   const maxMs = durationPresetMs(options.maxDurationS);
 
-  if (options.audioPath && options.myinstantsUrl) {
-    throw new CliInputError("Pass either audio_path or myinstants_url, not both.");
+  if (options.audioUrl && options.myinstantsUrl && options.audioUrl !== options.myinstantsUrl) {
+    throw new CliInputError("Pass either audio_url or myinstants_url, not both.");
+  }
+  const audioUrl = options.audioUrl ?? options.myinstantsUrl;
+  if (options.audioPath && audioUrl) {
+    throw new CliInputError("Pass either audio_path or audio_url, not both.");
   }
   if (options.outputPath && options.outputDir) {
     throw new CliInputError("Pass either --output or --output-dir, not both.");
@@ -385,13 +391,13 @@ export async function createSoundSticker(
   if (options.audioPath) {
     const audio = await readInputFile(options.audioPath, LIMITS.MAX_AUDIO_BYTES, "audio_path", pathOptions);
     state = await controller.importAudioFile(state, audio.bytes, audio.name, { type: "local" }, maxMs);
-  } else if (options.myinstantsUrl) {
-    state = await controller.importAudioUrl(state, options.myinstantsUrl, maxMs);
+  } else if (audioUrl) {
+    state = await controller.importAudioUrl(state, audioUrl, maxMs);
   }
 
   const audio = state.manifest.audios[0];
   if (EXPORT_PROFILES[profile].requiresAudio && !audio) {
-    throw new CliInputError(`Profile ${profile} needs a sound: pass --audio / audio_path or --url / myinstants_url.`);
+    throw new CliInputError(`Profile ${profile} needs a sound: pass --audio / audio_path or --url / audio_url.`);
   }
 
   if (options.cropX !== undefined || options.cropY !== undefined || matteColor !== undefined) {

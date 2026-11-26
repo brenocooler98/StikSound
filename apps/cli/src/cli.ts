@@ -41,7 +41,7 @@ Usage:
   stiksound <command> [options]
 
 Commands:
-  create <image>       Create a sound sticker from an image, GIF or clip + audio / MyInstants URL
+  create <image>       Create a sound sticker from an image, GIF or clip + audio file / audio URL
   probe  <file>        Inspect an image, GIF, clip, audio file or .stiksound.zip project
   export <project>     Re-export a saved .stiksound.zip project (optionally changing profile/edits)
   doctor               Check local FFmpeg, ffprobe, encoders and WebP WASM availability
@@ -56,6 +56,7 @@ Examples:
   stiksound probe sound.mp3 --json
   stiksound create cat.png -a boom.mp3 --trim loudest -d 5
   stiksound create cat.png -u https://www.myinstants.com/en/instant/vine-boom-sound-70972/ -o out.mp4
+  stiksound create cat.png -u https://example.com/sounds/boom.mp3
   stiksound create cat.png --profile standard-webp -o cat.webp
   stiksound export cat.stiksound.zip --profile video-webm-alpha
   stiksound mcp --print-config`;
@@ -67,7 +68,7 @@ const COMMAND_HELP: Record<string, string> = {
 
 Audio source (omit for video clips to use embedded sound, or for standard-webp):
   -a, --audio <path>           Local audio file (MP3, WAV, OGG, M4A, AAC; max 25 MB / 3 min)
-  -u, --url <myinstants-url>   MyInstants instant page or direct /media/sounds/ HTTPS URL
+  -u, --url <audio-url>        MyInstants page or direct HTTPS audio link (MP3, WAV, OGG, M4A)
 
 Trim & framing:
   --start <time>               Fragment start: ms (1500), seconds (1.5s) or mm:ss (0:01.5)
@@ -315,7 +316,7 @@ export async function runCli(argv: readonly string[], options: RunCliOptions = {
 
       const imagePath = values.image ?? positionals[0];
       if (!imagePath) {
-        throw new CliInputError("Missing image path. Usage: stiksound create <image> [-a <audio> | -u <myinstants-url>]");
+        throw new CliInputError("Missing image path. Usage: stiksound create <image> [-a <audio> | -u <audio-url>]");
       }
       if (values.matte && values.bg) {
         throw new CliInputError("Pass either --matte or --bg, not both.");
@@ -325,7 +326,7 @@ export async function runCli(argv: readonly string[], options: RunCliOptions = {
       const result = await createSoundSticker(context, {
         imagePath,
         audioPath: values.audio,
-        myinstantsUrl: values.url,
+        audioUrl: values.url,
         startMs: values.start !== undefined ? parseTimeToMs(values.start, "--start") : undefined,
         endMs: values.end !== undefined ? parseTimeToMs(values.end, "--end") : undefined,
         trim: parseTrimMode(values.trim),

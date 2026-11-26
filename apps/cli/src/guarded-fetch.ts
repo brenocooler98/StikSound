@@ -12,7 +12,7 @@ async function resolveWithSystemDns(hostname: string): Promise<string[]> {
 }
 
 /**
- * Wraps fetch for the MyInstants provider. The provider validates scheme, host, port and every
+ * Wraps fetch for the MyInstants and direct audio URL providers. The provider validates scheme, host, port and every
  * redirect hop; in Node we also resolve DNS before connecting and refuse loopback, private,
  * link-local or reserved addresses, and default redirect mode to "manual" as defense in depth.
  */

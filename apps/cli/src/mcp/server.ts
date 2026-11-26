@@ -16,7 +16,7 @@ const INSTRUCTIONS = [
   "StikSound turns an image, GIF or short clip plus a sound into a square video or sticker file, entirely on this machine.",
   "Typical flow: call probe_media on the image to check the crop and on the audio to find the loudest window, then call create_sound_sticker.",
   "All paths must be absolute or start with ~/. The server cannot see files attached to the chat, only files on disk.",
-  "Sounds can come from a local file or a myinstants.com URL; no other host is contacted.",
+  "Sounds can come from a local file or a public HTTPS link (a myinstants.com page or a direct audio file); only that link's host is contacted.",
   "No output is a WhatsApp sticker with sound: WhatsApp has no public format for one. Always relay the note returned with an export."
 ].join(" ");
 
@@ -71,10 +71,16 @@ export function createMcpServer(options: ServiceOptions = {}): McpServer {
           .string()
           .optional()
           .describe("Absolute path to a local MP3, WAV, OGG, M4A or AAC file (max 25 MB, 3 minutes). Omit for a video clip to use its own sound."),
+        audio_url: z
+          .string()
+          .optional()
+          .describe(
+            "Public HTTPS link to the sound: a myinstants.com instant page or a direct MP3, WAV, OGG, M4A or AAC file URL. Use instead of audio_path."
+          ),
         myinstants_url: z
           .string()
           .optional()
-          .describe("A myinstants.com instant page or direct /media/sounds/ URL. Use instead of audio_path."),
+          .describe("Deprecated alias of audio_url, kept for older clients."),
         start_ms: z.number().int().min(0).optional().describe("Start of the audio fragment in milliseconds. Default 0."),
         end_ms: z
           .number()
@@ -117,6 +123,7 @@ export function createMcpServer(options: ServiceOptions = {}): McpServer {
         const result = await createSoundSticker(context, {
           imagePath: args.image_path,
           audioPath: args.audio_path,
+          audioUrl: args.audio_url,
           myinstantsUrl: args.myinstants_url,
           startMs: args.start_ms,
           endMs: args.end_ms,

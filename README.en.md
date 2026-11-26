@@ -39,6 +39,7 @@ You can use **StikSound directly in your browser** with zero installation (works
 | **`5s \| 10s` duration toggle** | ✅ | ✅ |
 | **Downloaded local audio files** | ✅ | ✅ |
 | **Paste direct MyInstants URLs** | ❌ *(download MP3 first)* | ✅ |
+| **Paste direct audio links (`MP3`, `WAV`, `OGG`, `M4A`)** | ✅ *(if the host allows CORS)* | ✅ |
 | **Transparent WebM export** | ❌ *(MP4 only on web/mobile)* | ✅ |
 
 ---
@@ -49,7 +50,7 @@ StikSound combines **a square image** and **an audio clip** into a downloadable 
 
 - Supports **PNG, JPG/JPEG, WebP, and GIF** inputs (plus `MP4`, `MOV`, `WebM` clips on Web).
 - Decodes **animated GIFs** frame by frame and loops them seamlessly across the exported video duration.
-- Accepts local **MP3, WAV, OGG, M4A, or AAC** audio, or validated **MyInstants** links (Desktop & Chrome Extension).
+- Accepts local **MP3, WAV, OGG, M4A, or AAC** audio, validated **MyInstants** links (Desktop & Chrome Extension), or any direct HTTPS audio link.
 - Supports **9 built-in UI languages** (`ES`, `EN`, `PT`, `FR`, `DE`, `IT`, `RU`, `ZH`, `AR`) selectable in the `⋯` menu.
 - Exports compatible **MP4**, transparent **WebM**, portable **`.stiksound.zip`** bundles/projects, or static **WebP** (`<= 100 KB`).
 
@@ -66,7 +67,7 @@ StikSound combines **a square image** and **an audio clip** into a downloadable 
 
 1. **Load a sticker:** Paste with `Ctrl + V` / `Cmd + V`, drag & drop, or click the center stage (`PNG`, `JPG`, `WebP`, `GIF`; plus short video clips on Web).
 2. **Frame 1:1 crop:** Non-square inputs are centered automatically; move your mouse (or drag with your finger on mobile) to reposition the `1:1` crop up to `512 × 512 px` without upscaling.
-3. **Add audio:** Drop an audio file, click **Audio**, or paste a valid MyInstants URL (Desktop/Extension). Source limits: max `25 MB` and `3 minutes`; export selection between `0.1 s` and `5 s` or `10 s` (for animated GIFs, the minimum duration is 1 GIF loop up to the active cap).
+3. **Add audio:** Drop an audio file, click **Audio**, paste a valid MyInstants URL (Desktop/Extension), or paste a direct HTTPS audio link (on the web the host must allow CORS). Source limits: max `25 MB` and `3 minutes`; export selection between `0.1 s` and `5 s` or `10 s` (for animated GIFs, the minimum duration is 1 GIF loop up to the active cap).
 4. **Adjust trim & background:** Click the waveform or drag the trim slider, preview playback, and choose **Transparent** (WebM) or **White / Black / Custom color** (MP4) when alpha is present.
 5. **Preview, copy, or download:** Use `➔` to render and copy/share, `⬇` to pick an explicit export format, `⋯` for project save/open, language selection, and About/licenses, and `✕` to reset.
 
@@ -119,7 +120,7 @@ docs/            Requirements, architecture, specs & decisions
 
 - Zero backend servers receive your images, videos, or audio files.
 - All media processing runs locally on your device.
-- The only network request is MyInstants resolution (Desktop & Chrome Extension only), restricted by strict HTTPS allowlist, redirect cap, IP filtering (blocking private/loopback ranges in Rust), and 25 MB / 20 s limits.
+- The only network requests are the audio links you paste (MyInstants or a direct audio file): HTTPS only, port 443, no raw IPs or local hostnames, redirect cap, IP filtering (blocking private/loopback ranges in Rust and the CLI), and 25 MB / 20 s limits. The Chrome Extension asks for access to each new site the first time you use it.
 
 ---
 

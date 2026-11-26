@@ -39,6 +39,7 @@ Você pode usar o **StikSound diretamente no navegador** sem instalar nada (func
 | **Seletor de duração `5s \| 10s`** | ✅ | ✅ |
 | **Áudios locais baixados** | ✅ | ✅ |
 | **Colar links diretos do MyInstants** | ❌ *(baixe o MP3 antes)* | ✅ |
+| **Colar links diretos de áudio (`MP3`, `WAV`, `OGG`, `M4A`)** | ✅ *(se o site permitir CORS)* | ✅ |
 | **WebM com transparência** | ❌ *(apenas MP4 na web/celular)* | ✅ |
 
 ---
@@ -49,7 +50,7 @@ O StikSound combina **uma imagem quadrada** e **um trecho de áudio** em um arqu
 
 - Aceita **PNG, JPG/JPEG, WebP e GIF** (além de vídeos curtos `MP4`, `MOV`, `WebM` na versão Web).
 - Decodifica **GIFs animados** quadro a quadro e os repete em loop durante o vídeo exportado.
-- Aceita áudios locais **MP3, WAV, OGG, M4A ou AAC**, ou links validados do **MyInstants** (Desktop e Extensão Chrome).
+- Aceita áudios locais **MP3, WAV, OGG, M4A ou AAC**, links validados do **MyInstants** (Desktop e Extensão Chrome) ou qualquer link HTTPS direto de áudio.
 - Suporta **9 idiomas integrados na interface** (`ES`, `EN`, `PT`, `FR`, `DE`, `IT`, `RU`, `ZH`, `AR`) no menu `⋯`.
 - Exporta **MP4** compatível, **WebM com transparência**, pacotes/projetos **`.stiksound.zip`** ou **WebP estático** (`<= 100 KB`).
 
@@ -66,7 +67,7 @@ O StikSound combina **uma imagem quadrada** e **um trecho de áudio** em um arqu
 
 1. **Carregue o sticker:** Cole com `Ctrl + V` / `Cmd + V`, arraste ou clique na área central (`PNG`, `JPG`, `WebP`, `GIF`; na Web também aceita vídeos curtos).
 2. **Enquadre em 1:1:** Imagens não quadradas são centralizadas automaticamente; mova o mouse (ou arraste com o dedo no celular) para ajustar o recorte `1:1` até `512 × 512 px` sem aumentar artificialmente.
-3. **Adicione o áudio:** Arraste um arquivo de áudio, clique em **Áudio** ou cole uma URL válida do MyInstants (Desktop/Extensão). Limites: até `25 MB` e `3 minutos`; seleção entre `0,1 s` e `5 s` ou `10 s` (em GIFs animados, a duração mínima é de 1 ciclo do GIF até o limite ativo).
+3. **Adicione o áudio:** Arraste um arquivo de áudio, clique em **Áudio** cole uma URL válida do MyInstants (Desktop/Extensão) ou um link HTTPS direto de áudio (na Web o site precisa permitir CORS). Limites: até `25 MB` e `3 minutos`; seleção entre `0,1 s` e `5 s` ou `10 s` (em GIFs animados, a duração mínima é de 1 ciclo do GIF até o limite ativo).
 4. **Ajuste o trecho e o fundo:** Clique na forma de onda ou mova o controle deslizante, ouça a prévia e escolha **Transparente** (WebM) ou **Branco / Preto / Cor** (MP4) quando houver transparência.
 5. **Pré-visualize, copie ou baixe:** Use `➔` para gerar e copiar/compartilhar, `⬇` para escolher o formato exato, `⋯` para abrir/salvar projetos, trocar o idioma e ver Sobre/licenças, e `✕` para reiniciar.
 
@@ -119,7 +120,7 @@ docs/            Requisitos, arquitetura, especificações e decisões
 
 - Nenhum servidor recebe suas imagens, vídeos ou áudios.
 - Todo o processamento de mídia ocorre localmente no dispositivo.
-- A única requisição de rede é a resolução de links do MyInstants (apenas Desktop e Extensão Chrome), protegida por lista estrita HTTPS, limite de redirecionamentos, bloqueio de IPs privados/reservados em Rust e limite de 25 MB / 20 s.
+- As únicas requisições de rede são os links de áudio que você cola (MyInstants ou arquivo direto): apenas HTTPS na porta 443, sem IPs ou hosts locais, limite de redirecionamentos, bloqueio de IPs privados/reservados em Rust e na CLI, e limite de 25 MB / 20 s. A Extensão Chrome pede acesso a cada site novo na primeira vez.
 
 ---
 

@@ -9,7 +9,7 @@ import {
   type MediaEngine
 } from "@stiksound/core";
 import { WebMediaEngine } from "@stiksound/media-web";
-import { MyInstantsProvider, type FetchLike } from "@stiksound/providers";
+import { DirectAudioUrlProvider, MyInstantsProvider, type FetchLike } from "@stiksound/providers";
 import { StikSoundMinimalApp, type ShellBridge } from "@stiksound/ui";
 import "../../../packages/ui/src/styles.css";
 
@@ -17,25 +17,32 @@ function isTauriRuntime(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-const desktopFetch: FetchLike = async (input, init) => {
-  const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-  if (!isTauriRuntime()) {
-    return globalThis.fetch(input, init);
-  }
-  try {
-    const bytes = await invoke<number[]>("cmd_fetch_myinstants", { url });
-    return new Response(new Uint8Array(bytes), { status: 200 });
-  } catch (err) {
-    const msg = String(err ?? "");
-    if (msg.includes("file-too-large")) {
-      return new Response(null, { status: 413 });
+function createDesktopFetch(command: "cmd_fetch_myinstants" | "cmd_fetch_url"): FetchLike {
+  return async (input, init) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    if (!isTauriRuntime()) {
+      return globalThis.fetch(input, init);
     }
-    if (msg.includes("url-rejected")) {
-      return new Response(null, { status: 403 });
+    try {
+      const bytes = await invoke<number[]>(command, { url });
+      return new Response(new Uint8Array(bytes), { status: 200 });
+    } catch (err) {
+      const msg = String(err ?? "");
+      if (msg.includes("file-too-large")) {
+        return new Response(null, { status: 413 });
+      }
+      if (msg.includes("url-rejected")) {
+        return new Response(null, { status: 403 });
+      }
+      throw new Error(msg || "remote-unavailable");
     }
-    throw new Error(msg || "remote-unavailable");
-  }
-};
+  };
+}
+
+const providers = [
+  new MyInstantsProvider(createDesktopFetch("cmd_fetch_myinstants")),
+  new DirectAudioUrlProvider(createDesktopFetch("cmd_fetch_url"))
+];
 
 /**
  * Self-contained Desktop engine: uses Rust sniffing in Tauri and WebCodecs/MediaRecorder
@@ -96,7 +103,7 @@ createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <StikSoundMinimalApp
       engine={new DesktopMediaEngine()}
-      providers={[new MyInstantsProvider(desktopFetch)]}
+      providers={providers}
       shell={shell}
       initialLocale={locale}
     />

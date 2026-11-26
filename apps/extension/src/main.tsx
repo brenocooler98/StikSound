@@ -1,8 +1,8 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { detectLocale, type ExportArtifact } from "@stiksound/core";
+import { detectLocale, StikSoundError, type ExportArtifact } from "@stiksound/core";
 import { WebMediaEngine } from "@stiksound/media-web";
-import { MyInstantsProvider } from "@stiksound/providers";
+import { DirectAudioUrlProvider, MyInstantsProvider, type FetchLike } from "@stiksound/providers";
 import { StikSoundMinimalApp, type ShellBridge } from "@stiksound/ui";
 import "../../../packages/ui/src/styles.css";
 
@@ -47,7 +47,24 @@ const shell: ShellBridge = {
 };
 
 const engine = new WebMediaEngine();
-const providers = [new MyInstantsProvider()];
+function requestOriginAccess(url: string): Promise<boolean> {
+  if (typeof chrome === "undefined" || !chrome.permissions?.request) return Promise.resolve(true);
+  const origin = `${new URL(url).origin}/*`;
+  return chrome.permissions.request({ origins: [origin] }).catch(() => false);
+}
+
+const permissionedFetch: FetchLike = (input, init) => {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  const access = requestOriginAccess(url);
+  return access.then((granted) => {
+    if (!granted) {
+      throw new StikSoundError("url-rejected", `Access to ${new URL(url).origin} was not granted.`);
+    }
+    return globalThis.fetch(input, init);
+  });
+};
+
+const providers = [new MyInstantsProvider(), new DirectAudioUrlProvider(permissionedFetch)];
 const locale = detectLocale(navigator.language);
 
 createRoot(document.getElementById("root")!).render(

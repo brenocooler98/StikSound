@@ -39,6 +39,7 @@ Puedes usar **StikSound directamente desde el navegador** sin instalar nada (fun
 | **Switch de duración `5s \| 10s`** | ✅ | ✅ |
 | **Audios locales descargados** | ✅ | ✅ |
 | **Pegar enlaces directos de MyInstants** | ❌ *(descarga el MP3 primero)* | ✅ |
+| **Pegar enlaces directos de audio (`MP3`, `WAV`, `OGG`, `M4A`)** | ✅ *(si el sitio permite CORS)* | ✅ |
 | **WebM con transparencia** | ❌ *(solo MP4 en móvil/web)* | ✅ |
 
 <details>
@@ -76,7 +77,7 @@ Concretamente permite:
 - Usar stickers o memes en **PNG, JPG/JPEG, WebP o GIF**.
 - Trabajar con **GIF animados**, reproduciéndolos en bucle durante el fragmento exportado.
 - Agregar audio desde un archivo local **MP3, WAV, OGG, M4A o AAC**.
-- Pegar un enlace de **MyInstants** y descargar ese sonido de forma validada.
+- Pegar un enlace de **MyInstants** o un enlace HTTPS directo a un archivo de audio y descargar ese sonido de forma validada.
 - Seleccionar un fragmento de audio de **0,1 a 5 o 10 segundos** usando el selector integrado `5s | 10s`.
 - Cambiar la interfaz entre **9 idiomas integrados** (`ES`, `EN`, `PT`, `FR`, `DE`, `IT`, `RU`, `ZH`, `AR`) desde el menú `⋯`.
 - Exportar un **MP4 compatible**, un **WebM con transparencia**, un **paquete ZIP** o un **WebP estático**.
@@ -118,7 +119,7 @@ También tienes tres opciones:
 
 - Arrastrar un archivo de audio sobre la barra inferior.
 - Pulsar el botón **Audio** y elegir un archivo.
-- Pegar un enlace válido de MyInstants.
+- Pegar un enlace válido de MyInstants o un enlace HTTPS directo a un audio.
 
 Límites del archivo de origen:
 
@@ -341,7 +342,7 @@ En macOS, si aparece el aviso de desarrollador no verificado, haz clic derecho s
 
 - No existe un servidor de StikSound que reciba tus imágenes o audios.
 - El procesamiento de medios se hace localmente en la app o en la pestaña de la extensión.
-- La única descarga de red integrada es MyInstants, y solo cuando pegas explícitamente un enlace.
+- Las únicas descargas de red son los enlaces de audio que pegas explícitamente (MyInstants o un archivo directo): solo HTTPS, puerto 443, sin IPs ni hosts locales, máximo 2 redirecciones y límites de 25 MB / 20 s.
 - MyInstants está restringido por política de URLs:
   - solo HTTPS;
   - solo `myinstants.com` y `www.myinstants.com`;
@@ -422,7 +423,7 @@ npx tauri build
 
 | Problema | Causa probable | Qué hacer |
 | --- | --- | --- |
-| “Enlace rechazado por seguridad” | La URL no es HTTPS de MyInstants o tiene formato no permitido | Copia el enlace público del instante o el archivo directo desde `myinstants.com`. |
+| “Enlace rechazado por seguridad” | La URL no es HTTPS pública o apunta a una IP/host local | Copia un enlace público de `myinstants.com` o un enlace HTTPS directo al archivo de audio. |
 | “No se pudo leer este audio” | El archivo está corrupto o el códec no existe en esa plataforma | Prueba con MP3 o WAV, o exporta nuevamente el audio desde otra app. |
 | El video transparente sale con fondo | Elegiste MP4 o la plataforma no soporta alfa VP9 | Usa la salida WebM transparente. |
 | El botón copiar no pega en WhatsApp | El navegador/sistema bloquea videos en el portapapeles | Descarga el archivo con `⬇` y compártelo manualmente. |

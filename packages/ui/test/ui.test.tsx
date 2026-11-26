@@ -117,7 +117,7 @@ describe("StikSoundMinimalApp UI", () => {
     fireEvent.mouseMove(stickerZone, { clientX: 200, clientY: 100 });
 
     // Submit MyInstants URL in bottom timeline bar
-    const urlInput = screen.getByTestId("myinstants-url-input");
+    const urlInput = screen.getByTestId("audio-url-input");
     fireEvent.change(urlInput, { target: { value: "https://www.myinstants.com/en/instant/test/" } });
     fireEvent.submit(urlInput.closest("form")!);
 
@@ -141,7 +141,7 @@ describe("StikSoundMinimalApp UI", () => {
 
     // Click X (✕) -> resets everything back to 0
     fireEvent.click(screen.getByTestId("reset-all-btn"));
-    await waitFor(() => expect(screen.getByTestId("myinstants-url-input")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("audio-url-input")).toBeTruthy());
     expect(okArrowBtn.disabled).toBe(true);
     expect(container.querySelector('[data-testid="sticker-loaded-badge"]')).toBeNull();
   });
@@ -202,7 +202,7 @@ describe("StikSoundMinimalApp UI", () => {
       />
     );
 
-    const urlInput = screen.getByTestId("myinstants-url-input");
+    const urlInput = screen.getByTestId("audio-url-input");
     fireEvent.change(urlInput, { target: { value: "https://evil.example/sound.mp3" } });
     fireEvent.submit(urlInput.closest("form")!);
 
@@ -259,7 +259,7 @@ describe("StikSoundMinimalApp UI", () => {
     fireEvent.click(screen.getByTestId("max-duration-5s"));
     expect(screen.getByTestId("max-duration-5s").getAttribute("aria-pressed")).toBe("true");
 
-    const urlInput = screen.getByTestId("myinstants-url-input");
+    const urlInput = screen.getByTestId("audio-url-input");
     fireEvent.change(urlInput, { target: { value: "https://www.myinstants.com/en/instant/test-1/" } });
     fireEvent.submit(urlInput.closest("form")!);
 
